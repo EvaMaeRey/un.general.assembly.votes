@@ -1,0 +1,50 @@
+---
+title: "tidy"
+author: "Evangeline Reynolds"
+date: "5/8/2018"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(stringr)
+library(lubridate)
+```
+
+
+```{r}
+Resolutions0 <- read.csv(file = "raw_data/ResolutionDescriptions.csv")
+resolutions_no_concensus <- Resolutions0 %>%
+  mutate(monthday=str_extract(date, "\\d+\\/\\d+")) %>%
+  mutate(year=as.numeric(str_extract(date, "\\d\\d$"))) %>%
+  mutate(year=ifelse(year>40, year+1900, year+2000)) %>%
+  mutate(date=mdy(paste(monthday, year, sep="/"))) %>% 
+  select(-abstain, -yes, -no, -monthday, -year) %>%  # these are in the vote data
+  rename(middle_east = me, nuclear = nu, human_rights = hr) 
+  
+qplot(resolutions_no_concensus$date, resolutions_no_concensus$rcid)
+
+```
+
+```{r}
+load("raw_data/UNVotesPublishedGeneralAssembly.rdata") # loads object "x"
+country_resolution_votes <- x %>% select(rcid, unres, ccode, vote)  %>% 
+  mutate(vote = recode(vote, `1` = "Yes", `2` = "Abstain", `3` = "No", 
+                       `8` = "Absent", `9` = "Not a member")) %>% 
+  filter(vote != "Not a member")
+```
+
+```{r}
+library(countrycode)
+countries <- country_resolution_votes %>% 
+  group_by(ccode) %>% summarise() %>% 
+  rename(cown = ccode) %>% 
+  mutate(cowc = countrycode(cown, "cown", "cowc")) %>% 
+  mutate(iso3c = countrycode(cown, "cown", "iso3c")) %>% 
+  mutate(country_name = countrycode(cown, "cown", "country.name"))
+
+save(list = c("resolutions_no_concensus", "country_resolution_votes", "countries"),
+     file = "general_assembly_resolutions.Rdata")
+
+```
+
