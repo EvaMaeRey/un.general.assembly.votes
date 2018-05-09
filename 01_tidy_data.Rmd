@@ -20,9 +20,13 @@ resolutions_no_concensus <- Resolutions0 %>%
   mutate(year=ifelse(year>40, year+1900, year+2000)) %>%
   mutate(date=mdy(paste(monthday, year, sep="/"))) %>% 
   select(-abstain, -yes, -no, -monthday, -year) %>%  # these are in the vote data
-  rename(middle_east = me, nuclear = nu, human_rights = hr) 
+  rename(palestinian_conflict = me, nuclear_weapons = nu, human_rights = hr, 
+         economic_development = ec, colonialism = co, 
+         arms_control_disarmament = di)  #%>% 
+  # filter(is.na(para) & is.na(amend) ) %>% # these are votes on paragraphs and amendments
+  # select(-para, -amend) # and they are only coded up until the mid eighties
   
-qplot(resolutions_no_concensus$date, resolutions_no_concensus$rcid)
+resolutions_no_concensus %>% arrange(date)
 
 ```
 
@@ -41,10 +45,22 @@ countries <- country_resolution_votes %>%
   rename(cown = ccode) %>% 
   mutate(cowc = countrycode(cown, "cown", "cowc")) %>% 
   mutate(iso3c = countrycode(cown, "cown", "iso3c")) %>% 
-  mutate(country_name = countrycode(cown, "cown", "country.name"))
+  mutate(country_name = countrycode(cown, "cown", "country.name")) 
+```
 
-save(list = c("resolutions_no_concensus", "country_resolution_votes", "countries"),
+
+```{r}
+library(haven)
+country_year_ideal_points <- 
+  read_dta("raw_data/IdealpointsPublished.dta") %>% 
+  select(year, ccode, Idealpoint) %>% 
+  rename(cown = ccode)
+```
+
+
+```{r}
+save(list = c("resolutions_no_concensus", "country_resolution_votes", 
+              "countries", "country_year_ideal_points"),
      file = "general_assembly_resolutions.Rdata")
-
 ```
 
